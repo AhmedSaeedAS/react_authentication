@@ -1,50 +1,75 @@
 import React, { Component } from 'react';
-import logo from './logo.svg';
 import './App.css';
-import withFirebaseAuth from 'react-with-firebase-auth'
 import * as firebase from 'firebase/app';
 import 'firebase/auth';
 import firebaseConfig from './firebaseConfig';
 
-const firebaseApp = firebase.initializeApp(firebaseConfig);
-const firebaseAppAuth = firebaseApp.auth();
-const providers = {
-  googleProvider: new firebase.auth.GoogleAuthProvider(),
-};
+firebase.initializeApp(firebaseConfig);
 
 class App extends Component {
+  state = {
+    email: "",
+    password: "",
+    loggedInUser: ""
+  }
+
   render() {
+    console.log(firebase.user, "FB")
+    const setEmailHandler = (e) => {
+      this.setState({ email: e.target.value })
+    }
+    const setPwdHandler = (e) => {
+      this.setState({ password: e.target.value })
+    }
 
-    const {
-      user,
-      signOut,
-      signInWithGoogle,
-    } = this.props;
-    debugger;
-    console.log(user ? user.email : "test");
+    const setUser = (user) => {
+      this.setState({ loggedInUser: user })
+    }
 
-    //console.log(indexedDB)
+    const signIn = () => {
+      firebase.auth().signInWithEmailAndPassword(this.state.email, this.state.password)
+        .then(
+          //   if (e.user)
+          //     setUser(e.user)
+          //   alert("Sign In")
+          // })
+          firebase.auth().onAuthStateChanged(function (user) {
+            debugger
+            if (user) {
+              setUser(user)
+              alert("sign In")
+            }
+            else {
+              return
+            }
+          }))
+        .catch(function (error) {
+          // Handle Errors here.
+          var errorCode = error.code;
+          console.log(errorCode)
+          var errorMessage = error.message;
+          console.log(errorMessage)
+          return
+        });
+    }
+
+    const signOut = () => {
+      firebase.auth().signOut().then(function () {
+        // Sign-out successful.
+        console.log("Sign-out successful.")
+        setUser("")
+      }).catch(function (error) {
+        // An error happened.
+      });
+    }
+
     return (
-
-      <div className="App">
-
-        <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          {
-            user
-              ? <p>Hello, {user.displayName}</p>
-              : <p>Please sign in.</p>
-          }
-          {
-            user
-              ? <button onClick={signOut}>Sign out</button>
-              : <button onClick={signInWithGoogle}>Sign in with Google</button>
-          }
-        </header>
-
-
-      </div>
+      this.state.loggedInUser === "" ? <div className="App" >
+        <input placeholder="email" type="email" onChange={(e) => setEmailHandler(e)} />
+        <input placeholder="password" type="password" onChange={(e) => { setPwdHandler(e) }} />
+        <button onClick={() => signIn()}>Submit</button>
+      </div> : <button onClick={() => signOut()}>Log Out</button>
     );
   }
 }
-export default withFirebaseAuth({ providers, firebaseAppAuth, })(App);
+export default App;
